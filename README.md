@@ -127,6 +127,10 @@ func main() {
 * `>=`
 * `!=`
 
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/ruhulfbr/go-myql-qb/tree/main?tab=MIT-1-ov-file#readme) file for details.
+
 
 ## Support
 
