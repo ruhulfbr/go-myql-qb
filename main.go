@@ -51,6 +51,18 @@ type QueryBuilder struct {
 	parameters []interface{}
 }
 
+// AllowedOperators defines the list of valid comparison operators.
+var AllowedOperators = map[string]bool{
+	"=":    true,
+	"!=":   true,
+	"<":    true,
+	"<=":   true,
+	">":    true,
+	">=":   true,
+	"LIKE": true,
+	"IN":   true,
+}
+
 // Table initializes the query builder with a table name.
 func Table(table string) *QueryBuilder {
 	return &QueryBuilder{
@@ -67,10 +79,30 @@ func (qb *QueryBuilder) Select(columns ...string) *QueryBuilder {
 	return qb
 }
 
-// Where adds conditions to the WHERE clause.
-func (qb *QueryBuilder) Where(condition string, params ...interface{}) *QueryBuilder {
+// Where adds a condition to the WHERE clause with a specified operator.
+func (qb *QueryBuilder) Where(field string, operator string, value interface{}) *QueryBuilder {
+	if !isValidOperator(operator) {
+		log.Fatalf("Invalid operator: %s", operator)
+	}
+
+	condition := fmt.Sprintf("%s %s ?", field, operator)
+
 	qb.where = append(qb.where, condition)
-	qb.parameters = append(qb.parameters, params...)
+	qb.parameters = append(qb.parameters, value)
+
+	return qb
+}
+
+// OrWhere adds an OR condition to the WHERE clause with a specified operator.
+func (qb *QueryBuilder) OrWhere(field string, operator string, value interface{}) *QueryBuilder {
+	if !isValidOperator(operator) {
+		log.Fatalf("Invalid operator: %s", operator)
+	}
+
+	condition := fmt.Sprintf("OR %s %s ?", field, operator)
+
+	qb.where = append(qb.where, condition)
+	qb.parameters = append(qb.parameters, value)
 
 	return qb
 }
@@ -102,14 +134,6 @@ func (qb *QueryBuilder) WhereNotIn(column string, values []interface{}) *QueryBu
 // WhereNull adds a NULL condition to the WHERE clause.
 func (qb *QueryBuilder) WhereNull(column string) *QueryBuilder {
 	qb.where = append(qb.where, fmt.Sprintf("%s IS NULL", column))
-
-	return qb
-}
-
-// OrWhere adds an OR condition to the WHERE clause.
-func (qb *QueryBuilder) OrWhere(condition string, params ...interface{}) *QueryBuilder {
-	qb.where = append(qb.where, "OR "+condition)
-	qb.parameters = append(qb.parameters, params...)
 
 	return qb
 }
@@ -478,6 +502,26 @@ func (qb *QueryBuilder) BuildSelectQuery() string {
 	}
 
 	return query.String()
+}
+
+// BeginTransaction begins a new database transaction.
+func BeginTransaction() (*sql.Tx, error) {
+	return DBConnection.Begin()
+}
+
+// CommitTransaction commits the given transaction.
+func CommitTransaction(tx *sql.Tx) error {
+	return tx.Commit()
+}
+
+// RollbackTransaction rolls back the given transaction.
+func RollbackTransaction(tx *sql.Tx) error {
+	return tx.Rollback()
+}
+
+// isValidOperator checks if the given operator is valid.
+func isValidOperator(operator string) bool {
+	return AllowedOperators[operator]
 }
 
 // PrintQuery prints the built raw SQL query and its parameters.
