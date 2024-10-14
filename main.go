@@ -27,6 +27,16 @@ func ConnectMySQL(username, password, host, dbname string) {
 	}
 }
 
+// CloseDB closes the database connection.
+func CloseDB() {
+	if DBConnection != nil {
+		err := DBConnection.Close()
+		if err != nil {
+			log.Fatalf("Error closing the database connection: %v", err)
+		}
+	}
+}
+
 // QueryBuilder represents the query builder.
 type QueryBuilder struct {
 	table      string
@@ -34,6 +44,8 @@ type QueryBuilder struct {
 	joins      []string
 	where      []string
 	orderBy    string
+	groupBy    string
+	having     []string
 	limit      int
 	offset     int
 	parameters []interface{}
@@ -118,6 +130,13 @@ func (qb *QueryBuilder) WhereNotLike(column string, value string) *QueryBuilder 
 	return qb
 }
 
+// WhereBetween adds a BETWEEN condition to the WHERE clause.
+func (qb *QueryBuilder) WhereBetween(column string, start, end interface{}) *QueryBuilder {
+	qb.where = append(qb.where, fmt.Sprintf("%s BETWEEN ? AND ?", column))
+	qb.parameters = append(qb.parameters, start, end)
+	return qb
+}
+
 // DateBetween adds a BETWEEN condition for date columns in the WHERE clause.
 func (qb *QueryBuilder) DateBetween(column string, start string, end string) *QueryBuilder {
 	qb.where = append(qb.where, fmt.Sprintf("%s BETWEEN ? AND ?", column))
@@ -131,6 +150,34 @@ func (qb *QueryBuilder) Join(joinType, table, condition string) *QueryBuilder {
 	join := fmt.Sprintf("%s JOIN %s ON %s", joinType, table, condition)
 	qb.joins = append(qb.joins, join)
 
+	return qb
+}
+
+// InnerJoin adds an INNER JOIN clause to the query.
+func (qb *QueryBuilder) InnerJoin(table, condition string) *QueryBuilder {
+	return qb.Join("INNER", table, condition)
+}
+
+// LeftJoin adds a LEFT JOIN clause to the query.
+func (qb *QueryBuilder) LeftJoin(table, condition string) *QueryBuilder {
+	return qb.Join("LEFT", table, condition)
+}
+
+// RightJoin adds a RIGHT JOIN clause to the query.
+func (qb *QueryBuilder) RightJoin(table, condition string) *QueryBuilder {
+	return qb.Join("RIGHT", table, condition)
+}
+
+// GroupBy adds GROUP BY clause to the query.
+func (qb *QueryBuilder) GroupBy(columns ...string) *QueryBuilder {
+	qb.groupBy = strings.Join(columns, ", ")
+	return qb
+}
+
+// Having adds HAVING clause to the query.
+func (qb *QueryBuilder) Having(condition string, params ...interface{}) *QueryBuilder {
+	qb.having = append(qb.having, condition)
+	qb.parameters = append(qb.parameters, params...)
 	return qb
 }
 
@@ -210,6 +257,15 @@ func (qb *QueryBuilder) Count() (int, error) {
 	}
 
 	return count, nil
+}
+
+func (qb *QueryBuilder) Sum(column string) (float64, error) {
+	qb.columns = []string{"SUM(" + column + ")"}
+	query, params := qb.Build()
+	var sumValue float64
+	err := DBConnection.QueryRow(query, params...).Scan(&sumValue)
+
+	return sumValue, err
 }
 
 func (qb *QueryBuilder) Max(column string) (float64, error) {
