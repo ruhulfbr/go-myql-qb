@@ -18,7 +18,7 @@ This package is suitable for you if you need to perform some queries on:
 
 ## Installation
 ```bash
-go get github.com/ruhulfbr/go-myql-qb
+go get github.com/ruhulfbr/go-mysql-qb
 ```
 
 ## Basic Usage
@@ -29,12 +29,12 @@ package main
 import (
 	"fmt"
 	"log"
-	DB "github.com/ruhulfbr/go-myql-qb" // Update with your actual module path
+	DB "github.com/ruhulfbr/go-mysql-qb"
 )
 
 func main() {
 	// Connect to the database
-	DB.ConnectMySQL("username", "password", "localhost:3306", "your_database_name")
+	DB.ConnectDB("username", "password", "localhost:3306", "your_database_name")
 	defer DB.CloseDB()
 
 	// Create a new record
@@ -129,12 +129,12 @@ func main() {
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/ruhulfbr/go-myql-qb/tree/main?tab=MIT-1-ov-file#readme) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/ruhulfbr/go-mysql-qb/tree/main?tab=MIT-1-ov-file#readme) file for details.
 
 
 ## Support
 
-If you found an issue or had an idea please refer [to this section](https://github.com/ruhulfbr/go-myql-qb/issues).
+If you found an issue or had an idea please refer [to this section](https://github.com/ruhulfbr/go-mysql-qb/issues).
 
 ## Authors
 

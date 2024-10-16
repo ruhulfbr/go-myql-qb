@@ -1,4 +1,4 @@
-module github.com/ruhulfbr/go-myql-qb
+module github.com/ruhulfbr/go-mysql-qb
 
 go 1.16
 
